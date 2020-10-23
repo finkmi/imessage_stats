@@ -133,8 +133,8 @@ def average_response_time(id, time_frame = sys.maxsize):
         my_avg_response_time = sum(my_response_times) / len(my_response_times)
         recipients_avg_response_time = sum(recipients_response_times) / len(recipients_response_times)
     except ZeroDivisionError:
-        my_avg_response_time = "Error! No response times recorded."
-        recipients_avg_response_time = "Error! No response times recorded."
+        my_avg_response_time = "Error! No responses found."
+        recipients_avg_response_time = "Error! No responses found."
      
     print("Michael's average response time (s): " + str(my_avg_response_time))
     print("Your average response time (s): " + str(recipients_avg_response_time))
@@ -152,8 +152,25 @@ def average_message_length(id, time_frame = sys.maxsize):
     my_response_lengths = []
     recipients_response_lengths = []
     
+    #Go through all records record the number of words in the message
     for record in records:
-        print()
+        #Ensure no "None" types as empty strings will cause issues
+        if record[2] is not None: 
+            msg_length = len(record[2].split())           
+            if record[1] == 1:
+                my_response_lengths.append(msg_length)
+            else:
+                recipients_response_lengths.append(msg_length)
+            
+    try:
+        my_avg_response_length = sum(my_response_lengths) / len(my_response_lengths)
+        recipients_avg_response_length = sum(recipients_response_lengths) / len(recipients_response_lengths)
+    except ZeroDivisionError:
+        my_avg_response_length = "Error! No responses found."
+        recipients_avg_response_length = "Error! No responses found."
+     
+    print("Michael's average response length: " + str(my_avg_response_length) + " words")
+    print("Your average response length: " + str(recipients_avg_response_length) + " words")
         
    
 
@@ -175,3 +192,5 @@ do all via text commands??
 if __name__ == '__main__':
         
     average_response_time(8)
+    print()
+    average_message_length(8)
