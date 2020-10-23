@@ -70,6 +70,9 @@ def check_for_command(message):
         print('')
     elif(message == '!command2'):
         print('')
+        
+# def get_records(db_path, id, time_frame):
+    
     
 def average_response_time(db_path, id, time_frame):
     '''
@@ -97,10 +100,10 @@ def average_response_time(db_path, id, time_frame):
               LEFT JOIN chat_message_join on message.ROWID = chat_message_join.message_id\
               WHERE chat_id = {} and date > {}".format(id, most_recent - time_frame))
 
-    # Who is waiting for a reply from the perspective of the cursor.
-    waiting = c.fetchone()
     # All records filtered from the database.
     records = c.fetchall()
+    # Start off by having the 'waiting' record as the first record in the time frame
+    waiting = records[0]
      
     my_response_times = []
     recipients_response_times = []
