@@ -1,0 +1,162 @@
+'''
+Created on Oct 5, 2020
+
+@author: michaelfink
+'''
+
+import sqlite3
+import datetime
+import os
+# import matplotlib.pyplot as plt
+# import numpy as np
+from datetime import datetime
+
+
+
+def send_message(phone_number, message):
+    '''
+    Sends a message from mac computers via applescript using imessage app.
+    
+    phone_number - the number to send a message to.
+    message - the message to be sent.
+    '''
+    
+    os.system('osascript send.scpt {} "{}"'.format(phone_number, message))
+    
+def db_connect(db_path):
+    '''
+    Attempts to form a connection between this script and the database.
+    
+    db_path - the path to the database of messages (should be /Users/yourusername/Library/Messages/chat.db)
+    '''
+    
+    conn = None
+    try:
+        conn = sqlite3.connect(db_path)
+    except Exception as e:
+        print(e)
+        
+    return conn
+    
+def poll(db_path):
+    '''
+    Polls the message database for the most recent row.
+
+    db_path - the path to the database of messages (should be /Users/yourusername/Library/Messages/chat.db)
+    '''
+    
+    conn = db_connect(db_path)
+    c = conn.cursor()
+    c.execute("SELECT MAX(ROWID),text,handle_id,is_from_me FROM `message`")
+    return(c.fetchone())
+
+def convert_timestamp(mac_abs_timestamp):
+    '''
+    Converts Mac absolute timestamp into datetime object representing the same time
+    
+    mac_abs_timestamp (int) - timestamp desired to be converted
+    '''
+    
+    unix = datetime(1970, 1, 1)
+    cocoa = datetime(2001, 1, 1)
+    delta = cocoa - unix
+    
+    #fromtimestamp returns local datetime corresponding to POSIX (time since Jan. 1, 1970 in seconds)
+    #add difference between that and the given mac absolute timestamp and we have our current time
+    return(datetime.fromtimestamp(mac_abs_timestamp) + delta)
+    
+def check_for_command(message):
+    if(message == '!command1'):
+        print('')
+    elif(message == '!command2'):
+        print('')
+    
+def average_response_time(db_path, id, time_frame):
+    '''
+    Calculates average response time per user in a conversation and sends results to that chat.
+    
+    db_path (str) - 
+    id (int) - 
+    time_frame (int) - Number of seconds back through which the average should be calculated.
+    '''
+    
+    # Database connection
+    conn = db_connect(db_path)
+    c = conn.cursor()
+    
+    #Grab most recent message from desired chat and save the time
+    #Left join with c_m_j because it holds chat_id rather than handle_id. This gets me a certain chat rather than a certain person across chats
+    # This fixes group chats messing with data for a conversation
+    c.execute("SELECT MAX(date) FROM message \
+              LEFT JOIN chat_message_join on message.ROWID = chat_message_join.message_id\
+              WHERE chat_id = {}".format(id))
+    most_recent = c.fetchone()[0]
+    
+    # Get all data within the desired time_frame by subtracting it from the most recently sent message in a conversation
+    c.execute("SELECT date,is_from_me,text,chat_id FROM message \
+              LEFT JOIN chat_message_join on message.ROWID = chat_message_join.message_id\
+              WHERE chat_id = {} and date > {}".format(id, most_recent - time_frame))
+
+    # Who is waiting for a reply from the perspective of the cursor.
+    waiting = c.fetchone()
+    # All records filtered from the database.
+    records = c.fetchall()
+     
+    my_response_times = []
+    recipients_response_times = []
+     
+    # Loop through all records and calculate the average response time.
+    for record in records:
+        # If the next message is_from_me value is different from the waiting value then the most recent sender has swapped
+        if record[1] != waiting[1]:
+            # If I was waiting add response time to recipients list and update waiting value
+            if waiting[1] == 1:
+                recipients_response_times.append(record[0] - waiting[0])
+                waiting = record
+            # If recipient was waiting add response time to my list and update waiting value
+            elif waiting [1] == 0:
+                my_response_times.append(record[0] - waiting[0])
+                waiting = record
+    
+    try:
+        my_avg_response_time = sum(my_response_times) / len(my_response_times)
+        recipients_avg_response_time = sum(recipients_response_times) / len(recipients_response_times)
+    except ZeroDivisionError:
+        my_avg_response_time = "Error! No response times recorded."
+        recipients_avg_response_time = "Error! No response times recorded."
+     
+    print("Michael's average response time (s): " + str(my_avg_response_time))
+    print("Your average response time (s): " + str(recipients_avg_response_time))
+    
+def average_message_length(db_path, id, time_frame):
+    '''
+    Calculates average message length per user in a conversation and sends results to that chat.
+    
+    db_path (str) - 
+    id (int) - 
+    time_frame (int) - Number of seconds back through which the average should be calculated.
+    '''
+    print()
+
+   
+
+'''
+average message length
+longest response time
+longest message
+total messages sent
+text frequency by hour
+specific word frequency
+top 5 most used words (possibly excluding the, of, a things of that nature
+
+
+do all that with chosen time frame ^^
+do all via text commands??
+
+'''
+
+if __name__ == '__main__':
+    
+    db = '/Users/michaelfink/Library/Messages/chat.db'
+    
+    average_response_time(db, 8, 8 * 3600)
