@@ -11,7 +11,7 @@ import os
 # import numpy as np
 from datetime import datetime
 
-
+DB_PATH = '/Users/michaelfink/Library/Messages/chat.db'
 
 def send_message(phone_number, message):
     '''
@@ -71,15 +71,12 @@ def check_for_command(message):
     elif(message == '!command2'):
         print('')
         
-# def get_records(db_path, id, time_frame):
-    
-    
-def average_response_time(db_path, id, time_frame):
+def get_records(db_path, id, time_frame):
     '''
-    Calculates average response time per user in a conversation and sends results to that chat.
+    Gets all records within a desired time frame for a certain conversation.
     
-    db_path (str) - 
-    id (int) - 
+    db_path (str) - path to the database to get records from.
+    id (int) - id of the conversation from which to get records.
     time_frame (int) - Number of seconds back through which the average should be calculated.
     '''
     
@@ -101,7 +98,17 @@ def average_response_time(db_path, id, time_frame):
               WHERE chat_id = {} and date > {}".format(id, most_recent - time_frame))
 
     # All records filtered from the database.
-    records = c.fetchall()
+    return(c.fetchall())
+    
+def average_response_time(id, time_frame):
+    '''
+    Calculates average response time per user in a conversation and sends results to that chat.
+     
+    id (int) - What conversation to analyze.
+    time_frame (int) - Number of seconds back through which the average should be calculated.
+    '''
+    
+    records = get_records(DB_PATH, id, time_frame)
     # Start off by having the 'waiting' record as the first record in the time frame
     waiting = records[0]
      
@@ -131,7 +138,7 @@ def average_response_time(db_path, id, time_frame):
     print("Michael's average response time (s): " + str(my_avg_response_time))
     print("Your average response time (s): " + str(recipients_avg_response_time))
     
-def average_message_length(db_path, id, time_frame):
+def average_message_length(id, time_frame):
     '''
     Calculates average message length per user in a conversation and sends results to that chat.
     
@@ -139,8 +146,8 @@ def average_message_length(db_path, id, time_frame):
     id (int) - 
     time_frame (int) - Number of seconds back through which the average should be calculated.
     '''
-    print()
-
+    
+    records = get_records(DB_PATH, id, time_frame)
    
 
 '''
@@ -159,7 +166,5 @@ do all via text commands??
 '''
 
 if __name__ == '__main__':
-    
-    db = '/Users/michaelfink/Library/Messages/chat.db'
-    
-    average_response_time(db, 8, 8 * 3600)
+        
+    average_response_time(8, 8 * 3600)
