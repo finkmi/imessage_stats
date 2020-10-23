@@ -7,6 +7,7 @@ Created on Oct 5, 2020
 import sqlite3
 import datetime
 import os
+import sys
 # import matplotlib.pyplot as plt
 # import numpy as np
 from datetime import datetime
@@ -54,7 +55,7 @@ def convert_timestamp(mac_abs_timestamp):
     '''
     Converts Mac absolute timestamp into datetime object representing the same time
     
-    mac_abs_timestamp (int) - timestamp desired to be converted
+    mac_abs_timestamp - timestamp desired to be converted
     '''
     
     unix = datetime(1970, 1, 1)
@@ -71,13 +72,13 @@ def check_for_command(message):
     elif(message == '!command2'):
         print('')
         
-def get_records(db_path, id, time_frame):
+def get_records(db_path, id, time_frame = sys.maxsize):
     '''
     Gets all records within a desired time frame for a certain conversation.
     
-    db_path (str) - path to the database to get records from.
-    id (int) - id of the conversation from which to get records.
-    time_frame (int) - Number of seconds back through which the average should be calculated.
+    db_path - path to the database to get records from.
+    id - id of the conversation from which to get records.
+    time_frame - Number of seconds back through which the average should be calculated. Default value of maxsize to get all records by default.
     '''
     
     # Database connection
@@ -100,12 +101,12 @@ def get_records(db_path, id, time_frame):
     # All records filtered from the database.
     return(c.fetchall())
     
-def average_response_time(id, time_frame):
+def average_response_time(id, time_frame = sys.maxsize):
     '''
     Calculates average response time per user in a conversation and sends results to that chat.
      
-    id (int) - What conversation to analyze.
-    time_frame (int) - Number of seconds back through which the average should be calculated.
+    id - Conversation to be analyzed.
+    time_frame - Number of seconds back through which the average should be calculated. Default value of maxsize to get all records by default.
     '''
     
     records = get_records(DB_PATH, id, time_frame)
@@ -138,16 +139,22 @@ def average_response_time(id, time_frame):
     print("Michael's average response time (s): " + str(my_avg_response_time))
     print("Your average response time (s): " + str(recipients_avg_response_time))
     
-def average_message_length(id, time_frame):
+def average_message_length(id, time_frame = sys.maxsize):
     '''
-    Calculates average message length per user in a conversation and sends results to that chat.
+    Calculates average message length in words per user in a conversation and sends results to that chat.
     
-    db_path (str) - 
-    id (int) - 
-    time_frame (int) - Number of seconds back through which the average should be calculated.
+    id - Conversation to be analyzed
+    time_frame - Number of seconds back through which the average should be calculated. Default value of maxsize to get all records by default.
     '''
     
     records = get_records(DB_PATH, id, time_frame)
+    
+    my_response_lengths = []
+    recipients_response_lengths = []
+    
+    for record in records:
+        print()
+        
    
 
 '''
@@ -167,4 +174,4 @@ do all via text commands??
 
 if __name__ == '__main__':
         
-    average_response_time(8, 8 * 3600)
+    average_response_time(8)
