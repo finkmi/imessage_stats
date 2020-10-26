@@ -136,8 +136,35 @@ def average_response_time(id, time_frame = sys.maxsize):
         my_avg_response_time = "Error! No responses found."
         recipients_avg_response_time = "Error! No responses found."
      
-    print("Michael's average response time (s): " + str(my_avg_response_time))
-    print("Your average response time (s): " + str(recipients_avg_response_time))
+#     print("Michael's average response time (s): " + str(my_avg_response_time))
+#     print("Your average response time (s): " + str(recipients_avg_response_time))
+    return my_avg_response_time, recipients_avg_response_time
+    
+def longest_response_time(id, time_frame = sys.maxsize):
+    records = get_records(DB_PATH, id, time_frame)
+    # Start off by having the 'waiting' record as the first record in the time frame
+    waiting = records[0]
+     
+    my_response_times = []
+    recipients_response_times = []
+     
+    # Loop through all records and calculate the average response time.
+    for record in records:
+        # If the next message is_from_me value is different from the waiting value then the most recent sender has swapped
+        if record[1] != waiting[1]:
+            # If I was waiting add response time to recipients list and update waiting value
+            if waiting[1] == 1:
+                recipients_response_times.append(record[0] - waiting[0])
+                waiting = record
+            # If recipient was waiting add response time to my list and update waiting value
+            elif waiting [1] == 0:
+                my_response_times.append(record[0] - waiting[0])
+                waiting = record
+                
+    my_longest_response_time = max(my_response_times)
+    recipients_longest_response_time = max(recipients_response_times)
+    
+    return my_longest_response_time, recipients_longest_response_time
     
 def average_message_length(id, time_frame = sys.maxsize):
     '''
@@ -169,13 +196,13 @@ def average_message_length(id, time_frame = sys.maxsize):
         my_avg_response_length = "Error! No responses found."
         recipients_avg_response_length = "Error! No responses found."
      
-    print("Michael's average response length: " + str(my_avg_response_length) + " words")
-    print("Your average response length: " + str(recipients_avg_response_length) + " words")
+#     print("Michael's average response length: " + str(my_avg_response_length) + " words")
+#     print("Your average response length: " + str(recipients_avg_response_length) + " words")
+    return my_avg_response_length, recipients_avg_response_length
         
    
 
 '''
-average message length
 longest response time
 longest message
 total messages sent
@@ -191,6 +218,6 @@ do all via text commands??
 
 if __name__ == '__main__':
         
-    average_response_time(8)
+    print(average_response_time(8))
     print()
-    average_message_length(8)
+    print(average_message_length(8, 3600 * 8))
