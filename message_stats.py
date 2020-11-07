@@ -8,8 +8,9 @@ import sqlite3
 import datetime
 import os
 import sys
-# import matplotlib.pyplot as plt
-# import numpy as np
+import wordcloud
+import matplotlib.pyplot as plt
+import numpy as np
 from datetime import datetime
 
 DB_PATH = '/Users/michaelfink/Library/Messages/chat.db'
