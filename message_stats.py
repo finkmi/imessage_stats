@@ -8,10 +8,10 @@ import sqlite3
 import datetime
 import os
 import sys
-import wordcloud
 import matplotlib.pyplot as plt
 import numpy as np
 from datetime import datetime
+from wordcloud import WordCloud, STOPWORDS
 
 # DB_PATH = '/Users/michaelfink/Library/Messages/chat.db'
 DB_PATH = 'D:/python_projects/imessage_stats/chat.db'
@@ -25,6 +25,17 @@ def send_message(phone_number, message):
     '''
     
     os.system('osascript send.scpt {} "{}"'.format(phone_number, message))
+    
+
+def send_picture(phone_number):
+    '''
+    Sends a picture from mac computers via applescript using imessage app.
+    
+    phone_number - the number to send a message to.
+    '''
+    
+    os.system('osascript send.scpt {}'.format(phone_number))
+    
     
 def db_connect(db_path):
     '''
@@ -96,7 +107,7 @@ def get_records(db_path, id, time_frame = sys.maxsize):
     most_recent = c.fetchone()[0]
     
     # Get all data within the desired time_frame by subtracting it from the most recently sent message in a conversation
-    c.execute("SELECT date,is_from_me,text,chat_id FROM message \
+    c.execute("SELECT date, is_from_me, text, chat_id FROM message \
               LEFT JOIN chat_message_join on message.ROWID = chat_message_join.message_id\
               WHERE chat_id = {} and date > {}".format(id, most_recent - time_frame))
 
@@ -202,6 +213,31 @@ def average_message_length(id, time_frame = sys.maxsize):
 #     print("Your average response length: " + str(recipients_avg_response_length) + " words")
     return my_avg_response_length, recipients_avg_response_length
         
+
+def generate_wordcloud(id, time_frame = 3600 * 4200):
+    # default time frame of half year because it takes a while
+    records = get_records(DB_PATH, id, time_frame)
+    
+    words = ''
+    
+    #Go through all records record the number of words in the message
+    for record in records:
+        #Ensure no "None" types as empty strings will cause issues
+        if record[2] is not None: 
+            msg = record[2].split()
+            #Create one long string of all texts in the time frame
+            for word in msg:
+                words = words + ' ' + word
+    
+    #Create a wordcloud of all words sent
+    wordcloud = WordCloud(width = 800, height = 800, 
+                background_color ='white', 
+                stopwords = STOPWORDS,
+                min_font_size = 10).generate(words)
+    
+    wordcloud.to_file('D:/python_projects/imessage_stats/test.png')
+    
+    #Send the wordcloud
    
 
 '''
@@ -220,6 +256,7 @@ do all via text commands??
 
 if __name__ == '__main__':
         
-    print(average_response_time(8))
-    print()
-    print(average_message_length(8, 3600 * 8))
+    # print(average_response_time(8))
+    # print()
+    # print(average_message_length(8, 3600 * 8))
+    wordcloud(8, 3600 * 144)
