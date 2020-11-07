@@ -13,7 +13,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from datetime import datetime
 
-DB_PATH = '/Users/michaelfink/Library/Messages/chat.db'
+# DB_PATH = '/Users/michaelfink/Library/Messages/chat.db'
+DB_PATH = 'D:/python_projects/imessage_stats/chat.db'
 
 def send_message(phone_number, message):
     '''
