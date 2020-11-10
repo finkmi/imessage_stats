@@ -13,8 +13,10 @@ import numpy as np
 from datetime import datetime
 from wordcloud import WordCloud, STOPWORDS
 
-# DB_PATH = '/Users/michaelfink/Library/Messages/chat.db'
-DB_PATH = 'D:/python_projects/imessage_stats/chat.db'
+DB_PATH = '/Users/michaelfink/Library/Messages/chat.db'
+# DB_PATH = 'D:/python_projects/imessage_stats/chat.db'
+
+PIC_PATH = '/Users/michaelfink/pythonProjects/iMessageScripts/wordcloud.png'
 
 def send_message(phone_number, message):
     '''
@@ -34,7 +36,7 @@ def send_picture(phone_number):
     phone_number - the number to send a message to.
     '''
     
-    os.system('osascript send.scpt {}'.format(phone_number))
+    os.system('osascript sendpic.scpt {}'.format(phone_number))
     
     
 def db_connect(db_path):
@@ -178,7 +180,8 @@ def longest_response_time(id, time_frame = sys.maxsize):
     recipients_longest_response_time = max(recipients_response_times)
     
     return my_longest_response_time, recipients_longest_response_time
-    
+       
+
 def average_message_length(id, time_frame = sys.maxsize):
     '''
     Calculates average message length in words per user in a conversation and sends results to that chat.
@@ -208,11 +211,64 @@ def average_message_length(id, time_frame = sys.maxsize):
     except ZeroDivisionError:
         my_avg_response_length = "Error! No responses found."
         recipients_avg_response_length = "Error! No responses found."
-     
-#     print("Michael's average response length: " + str(my_avg_response_length) + " words")
-#     print("Your average response length: " + str(recipients_avg_response_length) + " words")
+
     return my_avg_response_length, recipients_avg_response_length
-        
+
+
+    
+def longest_message_length(id, time_frame = sys.maxsize):
+    '''
+    Calculates longest message length in words per user in a conversation and sends results to that chat.
+    
+    id - Conversation to be analyzed
+    time_frame - Number of seconds back through which the average should be calculated. Default value of maxsize to get all records by default.
+    '''
+    
+    records = get_records(DB_PATH, id, time_frame)
+    
+    my_response_lengths = []
+    recipients_response_lengths = []
+    
+    #Go through all records record the number of words in the message
+    for record in records:
+        #Ensure no "None" types as empty strings will cause issues
+        if record[2] is not None: 
+            msg_length = len(record[2].split())           
+            if record[1] == 1:
+                my_response_lengths.append(msg_length)
+            else:
+                recipients_response_lengths.append(msg_length)
+            
+    my_longest_message = max(my_response_lengths)
+    recipients_longest_message = max(recipients_response_lengths)
+    
+    return my_longest_message, recipients_longest_message
+
+
+def message_sent_totals(id, time_frame = sys.maxsize):
+    conn = db_connect(DB_PATH)
+    c = conn.cursor()
+    
+    #Grab most recent message from desired chat and save the time
+    #Left join with c_m_j because it holds chat_id rather than handle_id. This gets me a certain chat rather than a certain person across chats
+    # This fixes group chats messing with data for a conversation
+    c.execute("SELECT MAX(date) FROM message \
+              LEFT JOIN chat_message_join on message.ROWID = chat_message_join.message_id\
+              WHERE chat_id = {}".format(id))
+    most_recent = c.fetchone()[0]
+    
+    # Get all data within the desired time_frame by subtracting it from the most recently sent message in a conversation
+    c.execute("SELECT date FROM message \
+              LEFT JOIN chat_message_join on message.ROWID = chat_message_join.message_id\
+              WHERE chat_id = {} and date > {} and is_from_me = 1".format(id, most_recent - time_frame))
+    num_messages_from_me = len(c.fetchall())
+
+    c.execute("SELECT date FROM message \
+              LEFT JOIN chat_message_join on message.ROWID = chat_message_join.message_id\
+              WHERE chat_id = {} and date > {} and is_from_me = 0".format(id, most_recent - time_frame))
+    num_messages_from_recipient = len(c.fetchall())
+    
+    return num_messages_from_me, num_messages_from_recipient
 
 def generate_wordcloud(id, time_frame = 3600 * 4200):
     # default time frame of half year because it takes a while
@@ -235,14 +291,13 @@ def generate_wordcloud(id, time_frame = 3600 * 4200):
                 stopwords = STOPWORDS,
                 min_font_size = 10).generate(words)
     
-    wordcloud.to_file('D:/python_projects/imessage_stats/test.png')
+    wordcloud.to_file(PIC_PATH)
     
     #Send the wordcloud
    
 
 '''
-longest response time
-longest message
+
 total messages sent
 text frequency by hour
 specific word frequency
@@ -259,4 +314,11 @@ if __name__ == '__main__':
     # print(average_response_time(8))
     # print()
     # print(average_message_length(8, 3600 * 8))
-    wordcloud(8, 3600 * 144)
+    # generate_wordcloud(8, 3600 * 1)
+    message_sent_totals(8)
+    
+    
+    
+    
+    
+    
